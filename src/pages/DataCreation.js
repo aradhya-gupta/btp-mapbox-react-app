@@ -40,6 +40,7 @@ function DataCreation() {
   const [stops, setStops] = useState([]);
   const [clickedPoint, setClickedPoint] = useState([]);
   const [time, setTime] = useState(0);
+  const [date, setDate] = useState();
 
   const handleSingleClick = (e) => {
     setClickedPoint([e.lngLat.lng, e.lngLat.lat]);
@@ -62,7 +63,7 @@ function DataCreation() {
 
   const handleAddStop = () => {
     let s = stops;
-    s.push({long: clickedPoint[0], lat: clickedPoint[1], time: time});
+    s.push({ long: clickedPoint[0], lat: clickedPoint[1], time: time });
     setStops(s);
     console.log("stops=", s);
   };
@@ -83,6 +84,10 @@ function DataCreation() {
     setStops([]);
   };
 
+  const handleDate = (e) => {
+    // console.log(e.target.value);
+    setDate(e.target.value);
+  };
   const handleSaveToDB = async (e) => {
     e.preventDefault();
     try {
@@ -90,11 +95,14 @@ function DataCreation() {
         source: source,
         destination: destination,
         stops: stops,
+        date: date,
       });
       // console.log('doc saved ', docRef.id)
       alert("Saved to DB! Doc Ref ID: ", docRef.id);
     } catch (e) {
-      alert("Something went wrong! Could not save to database. Check console for error.")
+      alert(
+        "Something went wrong! Could not save to database. Check console for error."
+      );
       console.error("Error in saving to firebase: ", e);
     }
   };
@@ -279,9 +287,22 @@ function DataCreation() {
         {sourceSelected &&
           destinationSelected &&
           Object.keys(pathData).length > 0 && (
-            <button onClick={handleSaveToDB} style={{ margin: 5 }}>
-              Save
-            </button>
+            <>
+              {/* <input type="date" onChange={handleDate} /> */}
+              <br />
+              <label htmlFor="date"><h6>Date</h6></label>
+              <input
+                style={{ margin: "1px", height: "20px" }}
+                type="date"
+                id="date"
+                value={date}
+                onChange={handleDate}
+              />
+              <br />
+              <button onClick={handleSaveToDB}>
+                Save
+              </button>
+            </>
           )}
       </div>
     </div>

@@ -10,21 +10,21 @@ export default function Coords({
 }) {
   return (
     <div style={{ margin: "10px" }}>
-      <h4 style={{ margin: "2px", textAlign: "center" }}>{title}</h4>
+      <h6 style={{ margin: "2px", textAlign: "center" }}>{title}</h6>
       <label htmlFor="long">Longitude</label>
       <br />
-      <input style={{ margin: "2px" }} id="long" value={clickedPoint[0]} readOnly />
+      <input style={{ margin: "1px" }} id="long" value={clickedPoint[0]} readOnly />
       <br />
       <label htmlFor="lat">Latitude</label>
       <br />
-      <input style={{ margin: "2px" }} id="lat" value={clickedPoint[1]} readOnly/>
+      <input style={{ margin: "1px" }} id="lat" value={clickedPoint[1]} readOnly/>
       {showTime && (
         <>
           <br />
           <label htmlFor="time">Time(in min)</label>
           <br />
           <input
-            style={{ margin: "2px" }}
+            style={{ margin: "1px" }}
             type="number"
             id="time"
             value={time}
