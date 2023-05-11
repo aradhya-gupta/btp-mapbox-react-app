@@ -50,4 +50,8 @@ code {
   margin: auto;
   height: 20rem !important; 
 }
+.request-row:hover {
+  background-color: lightgrey;
+  cursor: pointer;
+}
 

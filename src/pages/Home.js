@@ -8,12 +8,20 @@ import Row from "react-bootstrap/Row";
 import { Link } from "react-router-dom";
 import { ReactComponent as Spinner } from "../components/spinner.svg";
 import { db } from "../firebase";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  updateDoc,
+} from "firebase/firestore";
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
   const [modalShow, setModalShow] = useState(false);
   const [requests, setRequests] = useState([]);
+  const [processing, setProcessing] = useState({});
 
   const [lat, setLat] = useState();
   const [long, setLong] = useState();
@@ -35,15 +43,21 @@ export default function Home() {
   const handleShowRequests = async () => {
     try {
       setLoading(true);
-      await getDocs(query(collection(db, "placementRequests"), orderBy('date'))).then((snapshot) => {
+      await getDocs(
+        query(collection(db, "placementRequests"), orderBy("date"))
+      ).then((snapshot) => {
         const r = snapshot.docs.map((doc) => ({
           ...doc.data(),
           id: doc.id,
         }));
         setRequests(r);
-        // console.log(r);
+        let p = {};
+        r.forEach((d) => {
+          p[d.id] = d.processing;
+        });
+        setProcessing(p);
+        console.log(r, p);
       });
-
       // snapshot.forEach((doc) => console.log(doc));
     } catch (e) {
       console.log(e);
@@ -51,6 +65,33 @@ export default function Home() {
       setLoading(false);
       setModalShow(true);
     }
+  };
+
+  const handleProcessClick = async (id, long, lat, dis, evrange, num) => {
+    // set processing to true for doc with id
+    const docRef = await doc(db, "placementRequests", id);
+    updateDoc(docRef, {
+      processing: true,
+    })
+      .then((d) => console.log("updated ", d))
+      .catch((er) => console.log(er));
+    let p = processing;
+    p[id] = true;
+    setProcessing(p);
+    setModalShow(false);
+    fetch(
+      `http://localhost:6001/getPlacement?lat=${lat}&lon=${long}&dis=${dis}&evrange=${evrange}&num=${num}`
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+      })
+      .catch((err) => {
+        console.log(err.message);
+      })
+      .finally(() => {
+      });
+    // console.log(processing);
   };
 
   return (
@@ -69,49 +110,84 @@ export default function Home() {
         show={modalShow}
         onHide={() => setModalShow(false)}
         aria-labelledby="contained-modal-title-vcenter"
+        size="lg"
+        centered
       >
         <Modal.Header closeButton>
           <Modal.Title id="contained-modal-title-vcenter">
-            Using Grid in Modal
+            Placement Requests
           </Modal.Title>
         </Modal.Header>
         <Modal.Body className="show-grid">
           <Container>
             <Row>
-              <Col xs={12} md={8}>
-                Date
+              <Col>
+                <b>Date</b>
               </Col>
-              <Col xs={6} md={4}>
-                Coords
+              <Col>
+                <b>Coords</b>
               </Col>
-              <Col xs={6} md={4}>
-                EV Range
+              <Col>
+                <b>Distance</b>
               </Col>
-              <Col xs={6} md={4}>
-                Number
+              <Col>
+                <b>EV Range</b>
               </Col>
-              <Col xs={6} md={4}>
-                Status
+              <Col>
+                <b>Number</b>
+              </Col>
+              <Col>
+                <b>Status</b>
               </Col>
             </Row>
             {requests.map((r) => (
-              <Row>
-                <Col xs={6} md={4}>
-                  {r.date}
-                </Col>
-                <Col xs={6} md={4}>
+              <Row
+                className="request-row"
+                style={{ border: "1px solid grey", margin: "3px" }}
+                key={r.id}
+              >
+                <Col>{new Date(r.date).toLocaleDateString("en-GB")}</Col>
+                <Col>
                   {r.lat} {r.long}
                 </Col>
-                <Col xs={6} md={4}>
-                  {r.evrange}
-                </Col>  
-                <Col xs={6} md={4}>
-                  {r.num}
-                </Col>
-                <Col xs={6} md={4}>
-                  {(r.invalid) && ("Invalid")}
-                  {(r.completed) && ("Completed")}
-                  {(!r.completed) && ("Processing")}
+                <Col>{r.dis}</Col>
+                <Col>{r.evrange}</Col>
+                <Col>{r.num}</Col>
+                <Col>
+                  {r.invalid && "Invalid"}
+                  {r.completed && (
+                    <Button variant="secondary">
+                    <Link
+                      to="/placed"
+                      state={{ lat: '25.5357', long: '84.8512' }}
+                      style={{ color: "#FFF", zIndex: "40"  }}
+                    >
+                      Show
+                    </Link>
+                  </Button>
+                  )}
+                  {!r.invalid && !r.completed && !processing[r.id] && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      style={{ margin: "1px" }}
+                      onClick={() =>
+                        handleProcessClick(
+                          r.id,
+                          r.long,
+                          r.lat,
+                          r.dis,
+                          r.evrange,
+                          r.num
+                        )
+                      }
+                    >
+                      Process
+                    </Button>
+                  )}
+                  {!r.invalid && !r.completed && processing[r.id] && (
+                    <Spinner style={{ margin: "auto" }} />
+                  )}
                 </Col>
               </Row>
             ))}
@@ -127,7 +203,7 @@ export default function Home() {
           <Card.Title>Create Data</Card.Title>
           <Card.Text>
             Add paths visited as a set of origin-destination points along with
-            time spent at various spots.
+            time spent at the destination.
             <br />
             <input
               style={{ marginTop: "2rem" }}

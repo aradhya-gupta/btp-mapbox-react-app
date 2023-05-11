@@ -113,6 +113,7 @@ function Visualize() {
         num: parseInt(num),
         completed: false,
         invalid: false,
+        processing: false,
         result: [],
         date: (new Date()).getTime(),
       });
